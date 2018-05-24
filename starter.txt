@@ -1,0 +1,63 @@
+
+import java.io._
+import java.time._
+
+import org.apache.log4j.LogManager
+import org.apache.spark.sql.{Column, _}
+import org.apache.spark.sql.functions.{unix_timestamp, _}
+import org.apache.spark.sql.SparkSession
+import java.time.format.DateTimeFormatter
+import java.util.Calendar
+
+import org.apache.spark.{SparkConf, SparkContext}
+
+object full_file_creation1 extends Serializable {
+
+  val log = LogManager.getLogger(getClass.getName)
+  println(log)
+  val now = LocalDateTime.now()
+  println(now)
+  val date = LocalDate.now()
+  println(date)
+  val odate = date.format(DateTimeFormatter.ofPattern("yyyyMMdd"))
+  println(odate)
+
+  def convert_column_date(old_date: Column, format: String): Column = {
+    return date_format(to_date(from_unixtime(unix_timestamp(old_date, format))), "yyyyMMdd")
+  }
+
+
+
+
+  def main(args: Array[String]): Unit = {
+
+    val conf = new SparkConf()
+    conf.setAppName("dataset test")
+    conf.setMaster("local[2]")
+    val sc = new SparkContext(conf)
+    val spark = SparkSession.builder().getOrCreate()
+    println(sc)
+
+
+    val input_file_path = "/users/meenakshi/"
+    val output_file_path = "/users/meenakshi"
+    val input_file = input_file_path + odate + "_" + odate + "_"  + "input_file.dat"
+    println(input_file)
+
+    import spark.implicits._
+    try {
+      val full_file_df = spark.read.option("delimiter", ",").csv(input_file).select($"_c0".as("acct"),
+      $"_c1".cast("integer").as("system_id"), $"_c2".cast("string").as("lob"),$"_c3".as("code"),
+        $"_c4".cast("string").as("sysdate"))
+
+      full_file_df.show
+
+
+
+
+
+    }
+
+  }
+
+}
